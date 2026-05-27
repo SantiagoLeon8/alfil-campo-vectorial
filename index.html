@@ -1,245 +1,127 @@
 <!DOCTYPE html>
 <html lang="es">
-
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Alfil AR con Campo Vectorial</title>
+    <!-- A-Frame y AR.js -->
+    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
+    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
+    
     <style>
-        body {
-            margin: 0;
-            overflow: hidden;
-        }
-
-        #info {
+        body { margin: 0; overflow: hidden; }
+        .info {
             position: absolute;
             bottom: 20px;
             left: 20px;
-            background: rgba(0, 0, 0, 0.7);
+            background: rgba(0,0,0,0.7);
             color: white;
             padding: 8px 15px;
             border-radius: 8px;
-            font-family: sans-serif;
-            font-size: 14px;
+            font-family: monospace;
             z-index: 100;
             pointer-events: none;
-        }
-
-        #error {
-            position: absolute;
-            top: 50%;
-            left: 50%;
-            transform: translate(-50%, -50%);
-            background: rgba(255, 0, 0, 0.9);
-            color: white;
-            padding: 20px;
-            border-radius: 10px;
-            text-align: center;
-            z-index: 200;
-            display: none;
-            font-family: monospace;
+            font-size: 14px;
         }
     </style>
 </head>
-
 <body>
-    <div id="info">🔍 Apunta al marcador HIRO (impreso)</div>
-    <div id="error">❌ Error: No se pudo iniciar la cámara.<br>Verifica que diste permiso y usas HTTPS.<br>En móvil, usa
-        Chrome o Safari.</div>
+    <div class="info">🎯 Apunta al marcador HIRO impreso | Alfil + campo vectorial</div>
 
-    <!-- Cargar Three.js y AR.js (versión estable) -->
-    <script type="importmap">
-        {
-            "imports": {
-                "three": "https://unpkg.com/three@0.128.0/build/three.module.js",
-                "three/addons/": "https://unpkg.com/three@0.128.0/examples/jsm/",
-                "ar.js": "https://unpkg.com/@ar-js-org/ar.js@3.4.5/three.js/ar-threex.js"
+    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
+        <!-- Marcador HIRO -->
+        <a-marker type="pattern" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.patt">
+            
+            <!-- Alfil (pieza 3D simple pero elegante) -->
+            <a-entity position="0 0 0" scale="0.5 0.5 0.5">
+                <!-- Base -->
+                <a-cylinder radius="0.9" height="0.25" color="#222" metalness="0.7" position="0 0 0"></a-cylinder>
+                <!-- Cuerpo -->
+                <a-cylinder radius="0.65" height="0.9" color="#222" metalness="0.7" position="0 0.6 0"></a-cylinder>
+                <!-- Anillo dorado -->
+                <a-torus radius="0.7" radius-tubular="0.08" color="#ccaa66" metalness="0.9" position="0 1.0 0" rotation="90 0 0"></a-torus>
+                <!-- Cuello -->
+                <a-cylinder radius="0.45" height="0.35" color="#222" position="0 1.3 0"></a-cylinder>
+                <!-- Cabeza (esfera achatada) -->
+                <a-sphere radius="0.5" color="#222" scale="0.9 0.65 0.9" position="0 1.65 0"></a-sphere>
+                <!-- Mitra -->
+                <a-cylinder radius="0.48" height="0.45" color="#222" position="0 1.95 0"></a-cylinder>
+                <!-- Punta -->
+                <a-cone radius="0.35" height="0.7" color="#222" position="0 2.25 0"></a-cone>
+                <!-- Bola dorada -->
+                <a-sphere radius="0.14" color="#ccaa66" position="0 2.6 0"></a-sphere>
+            </a-entity>
+
+            <!-- Campo vectorial: flechas alrededor del alfil -->
+            <!-- Flechas en XZ -->
+            <a-entity position="-1.5 1.0 -1.5">
+                <a-arrow color="#00aaff" rotation="0 0 0"></a-arrow>
+            </a-entity>
+            <a-entity position="-1.5 1.0 0">
+                <a-arrow color="#44ffaa" rotation="0 90 0"></a-arrow>
+            </a-entity>
+            <a-entity position="-1.5 1.0 1.5">
+                <a-arrow color="#ffaa44" rotation="0 180 0"></a-arrow>
+            </a-entity>
+            <a-entity position="0 1.0 -1.5">
+                <a-arrow color="#ff44aa" rotation="0 45 0"></a-arrow>
+            </a-entity>
+            <a-entity position="0 1.0 1.5">
+                <a-arrow color="#aa44ff" rotation="0 -45 0"></a-arrow>
+            </a-entity>
+            <a-entity position="1.5 1.0 -1.5">
+                <a-arrow color="#00ffaa" rotation="0 -90 0"></a-arrow>
+            </a-entity>
+            <a-entity position="1.5 1.0 0">
+                <a-arrow color="#aa00ff" rotation="0 180 0"></a-arrow>
+            </a-entity>
+            <a-entity position="1.5 1.0 1.5">
+                <a-arrow color="#ff6600" rotation="0 90 0"></a-arrow>
+            </a-entity>
+
+            <!-- Flechas en altura (variación vertical) -->
+            <a-entity position="-1 1.8 -1">
+                <a-arrow color="#88aaff" rotation="20 45 0"></a-arrow>
+            </a-entity>
+            <a-entity position="1 2.2 1">
+                <a-arrow color="#88aaff" rotation="-20 -30 0"></a-arrow>
+            </a-entity>
+            <a-entity position="0 2.5 0">
+                <a-arrow color="#ff8888" rotation="45 0 0"></a-arrow>
+            </a-entity>
+        </a-marker>
+
+        <!-- Cámara fija (AR.js la controla) -->
+        <a-entity camera></a-entity>
+    </a-scene>
+
+    <script>
+        // Registrar el componente de flecha (ArrowHelper no existe en A-Frame por defecto, lo creamos)
+        AFRAME.registerComponent('a-arrow', {
+            schema: {
+                color: { type: 'color', default: '#ff0000' }
+            },
+            init: function() {
+                const color = this.data.color;
+                // Crear un grupo con un cilindro y un cono para la flecha
+                const group = document.createElement('a-entity');
+                const shaft = document.createElement('a-cylinder');
+                shaft.setAttribute('radius', '0.08');
+                shaft.setAttribute('height', '0.8');
+                shaft.setAttribute('color', color);
+                shaft.setAttribute('position', '0 0.4 0');
+                const head = document.createElement('a-cone');
+                head.setAttribute('radius', '0.2');
+                head.setAttribute('height', '0.3');
+                head.setAttribute('color', color);
+                head.setAttribute('position', '0 0.85 0');
+                group.appendChild(shaft);
+                group.appendChild(head);
+                this.el.appendChild(group);
+                // Rotar para que apunte hacia adelante (por defecto apunta hacia Y+, lo rotamos)
+                group.object3D.rotation.x = Math.PI / 2; // apunta hacia Z
             }
-        }
-    </script>
-
-    <script type="module">
-        import * as THREE from 'three';
-        import { ARjs } from 'ar.js';
-
-        // Esperar a que el DOM esté listo
-        window.addEventListener('DOMContentLoaded', () => {
-            initAR();
         });
-
-        async function initAR() {
-            try {
-                // Configuración AR.js con Three.js
-                const ar = new ARjs({
-                    sourceType: 'webcam',
-                    sourceWidth: 640,
-                    sourceHeight: 480,
-                    displayWidth: window.innerWidth,
-                    displayHeight: window.innerHeight,
-                    debugUIEnabled: false,
-                    trackingMethod: 'artoolkit'  // usa marcadores
-                });
-
-                await ar.init();
-
-                // Obtener la escena y cámara que maneja AR.js
-                const scene = ar.scene;
-                const camera = ar.camera;
-                const renderer = ar.renderer;
-
-                // --- Iluminación ---
-                const ambientLight = new THREE.AmbientLight(0x404060);
-                scene.add(ambientLight);
-                const dirLight = new THREE.DirectionalLight(0xffffff, 1);
-                dirLight.position.set(2, 5, 3);
-                dirLight.castShadow = true;
-                scene.add(dirLight);
-                const backLight = new THREE.PointLight(0x4466cc, 0.4);
-                backLight.position.set(-1, 2, -2);
-                scene.add(backLight);
-
-                // --- Grupo que se anclará al marcador HIRO ---
-                const markerGroup = new THREE.Group();
-                ar.addMarker('hiro', markerGroup);  // patrón hiro
-
-                // ***** CREAR ALFIL *****
-                const bishopGroup = new THREE.Group();
-                const darkMat = new THREE.MeshStandardMaterial({ color: 0x222222, metalness: 0.7, roughness: 0.3 });
-                const goldMat = new THREE.MeshStandardMaterial({ color: 0xccaa66, metalness: 0.85, roughness: 0.25 });
-
-                // Base
-                const base = new THREE.Mesh(new THREE.CylinderGeometry(0.9, 0.95, 0.25, 32), darkMat);
-                base.position.y = 0;
-                base.castShadow = true;
-                bishopGroup.add(base);
-                // Cuerpo
-                const body = new THREE.Mesh(new THREE.CylinderGeometry(0.65, 0.8, 0.9, 32), darkMat);
-                body.position.y = 0.7;
-                bishopGroup.add(body);
-                // Anillo
-                const ring = new THREE.Mesh(new THREE.TorusGeometry(0.7, 0.08, 32, 64), goldMat);
-                ring.position.y = 0.75;
-                ring.rotation.x = Math.PI / 2;
-                bishopGroup.add(ring);
-                // Cuello
-                const neck = new THREE.Mesh(new THREE.CylinderGeometry(0.45, 0.55, 0.35, 24), darkMat);
-                neck.position.y = 1.05;
-                bishopGroup.add(neck);
-                // Cabeza
-                const head = new THREE.Mesh(new THREE.SphereGeometry(0.5, 32, 32), darkMat);
-                head.position.y = 1.35;
-                head.scale.set(0.9, 0.65, 0.9);
-                bishopGroup.add(head);
-                // Mitra
-                const mitreBase = new THREE.Mesh(new THREE.CylinderGeometry(0.48, 0.62, 0.45, 32), darkMat);
-                mitreBase.position.y = 1.65;
-                bishopGroup.add(mitreBase);
-                // Punta
-                const spike = new THREE.Mesh(new THREE.ConeGeometry(0.35, 0.7, 32), darkMat);
-                spike.position.y = 1.95;
-                bishopGroup.add(spike);
-                // Bola dorada
-                const finial = new THREE.Mesh(new THREE.SphereGeometry(0.14, 24, 24), goldMat);
-                finial.position.y = 2.28;
-                bishopGroup.add(finial);
-                // Detalles
-                for (let i = 0; i < 8; i++) {
-                    const angle = (i / 8) * Math.PI * 2;
-                    const stud = new THREE.Mesh(new THREE.SphereGeometry(0.07, 16, 16), goldMat);
-                    stud.position.set(Math.cos(angle) * 0.72, 0.55, Math.sin(angle) * 0.72);
-                    bishopGroup.add(stud);
-                }
-                markerGroup.add(bishopGroup);
-
-                // ***** CAMPO VECTORIAL (flechas) *****
-                function vectorField(x, y, z) {
-                    let vx = -z;
-                    let vy = Math.sin(x) * Math.cos(z) * 0.8;
-                    let vz = x;
-                    let len = Math.sqrt(vx * vx + vy * vy + vz * vz);
-                    if (len < 0.01) return new THREE.Vector3(0, 0.2, 0);
-                    const scale = 0.45;
-                    return new THREE.Vector3(vx / len * scale, vy / len * scale, vz / len * scale);
-                }
-
-                const step = 1.2;
-                for (let x = -2.5; x <= 2.5; x += step) {
-                    for (let z = -2.5; z <= 2.5; z += step) {
-                        for (let y = 0.2; y <= 2.6; y += step) {
-                            const distBody = Math.sqrt(x * x + (y - 0.8) * (y - 0.8) + z * z);
-                            const distHead = Math.sqrt(x * x + (y - 1.6) * (y - 1.6) + z * z);
-                            if (distBody > 0.85 && distHead > 0.7) {
-                                const dir = vectorField(x, y, z);
-                                const color = new THREE.Color().setHSL(0.55 - Math.min(dir.length(), 1.0) * 0.4, 1, 0.6);
-                                const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(x, y, z), dir.length(), color, 0.25, 0.12);
-                                markerGroup.add(arrow);
-                            }
-                        }
-                    }
-                }
-
-                // ***** PARTÍCULAS DINÁMICAS *****
-                const particleCount = 600;
-                const particleGeo = new THREE.BufferGeometry();
-                const posArray = new Float32Array(particleCount * 3);
-                for (let i = 0; i < particleCount; i++) {
-                    posArray[i * 3] = (Math.random() - 0.5) * 5;
-                    posArray[i * 3 + 1] = Math.random() * 3;
-                    posArray[i * 3 + 2] = (Math.random() - 0.5) * 5;
-                }
-                particleGeo.setAttribute('position', new THREE.BufferAttribute(posArray, 3));
-                const particleMat = new THREE.PointsMaterial({ color: 0x88aaff, size: 0.06, transparent: true, blending: THREE.AdditiveBlending });
-                const particles = new THREE.Points(particleGeo, particleMat);
-                markerGroup.add(particles);
-
-                function updateParticles() {
-                    const positionsAttr = particleGeo.attributes.position.array;
-                    for (let i = 0; i < particleCount; i++) {
-                        let px = positionsAttr[i * 3];
-                        let py = positionsAttr[i * 3 + 1];
-                        let pz = positionsAttr[i * 3 + 2];
-                        const dir = vectorField(px, py, pz);
-                        px += dir.x * 0.03;
-                        py += dir.y * 0.03;
-                        pz += dir.z * 0.03;
-                        if (Math.abs(px) > 3.5 || pz > 3.5 || pz < -3.5 || py < 0 || py > 3.2) {
-                            px = (Math.random() - 0.5) * 4.5;
-                            pz = (Math.random() - 0.5) * 4.5;
-                            py = Math.random() * 2.8;
-                        }
-                        positionsAttr[i * 3] = px;
-                        positionsAttr[i * 3 + 1] = py;
-                        positionsAttr[i * 3 + 2] = pz;
-                    }
-                    particleGeo.attributes.position.needsUpdate = true;
-                    requestAnimationFrame(updateParticles);
-                }
-                updateParticles();
-
-                // Pequeño suelo virtual para sombra
-                const shadowPlane = new THREE.Mesh(
-                    new THREE.PlaneGeometry(3.5, 3.5),
-                    new THREE.ShadowMaterial({ opacity: 0.4, color: 0x000000, transparent: true, side: THREE.DoubleSide })
-                );
-                shadowPlane.rotation.x = -Math.PI / 2;
-                shadowPlane.position.y = -0.2;
-                shadowPlane.receiveShadow = true;
-                markerGroup.add(shadowPlane);
-
-                // Iniciar el loop de renderizado de AR.js
-                ar.start();
-
-                // Ocultar mensaje de error si todo va bien
-                document.getElementById('error').style.display = 'none';
-                console.log('AR iniciado correctamente');
-
-            } catch (err) {
-                console.error(err);
-                document.getElementById('error').style.display = 'block';
-                document.getElementById('error').innerHTML = `❌ Error: ${err.message}<br>Revisa consola.`;
-            }
-        }
     </script>
 </body>
-
 </html>
