@@ -4,36 +4,26 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
     <title>Alfil AR con Campo Vectorial</title>
-    <!-- A-Frame y AR.js -->
-    <script src="https://aframe.io/releases/1.4.2/aframe.min.js"></script>
-    <script src="https://raw.githack.com/AR-js-org/AR.js/master/aframe/build/aframe-ar.js"></script>
-    
+    <script src="https://aframe.io/releases/1.0.4/aframe.min.js"></script>
+    <script src="https://cdn.rawgit.com/jeromeetienne/AR.js/1.6.2/aframe/build/aframe-ar.js"></script>
     <style>
         body { margin: 0; overflow: hidden; }
         .info {
-            position: absolute;
-            bottom: 20px;
-            left: 20px;
-            background: rgba(0,0,0,0.7);
-            color: white;
-            padding: 8px 15px;
-            border-radius: 8px;
-            font-family: monospace;
-            z-index: 100;
-            pointer-events: none;
-            font-size: 14px;
+            position: absolute; bottom: 20px; left: 20px; background: rgba(0,0,0,0.7); color: white;
+            padding: 8px 15px; border-radius: 8px; font-family: monospace; z-index: 100;
+            pointer-events: none; font-size: 14px;
         }
     </style>
 </head>
 <body>
-    <div class="info">🎯 Apunta al marcador HIRO impreso | Alfil + campo vectorial</div>
+    <div class="info">🎯 Apunta al marcador HIRO | Alfil + Campo Vectorial</div>
 
-    <a-scene embedded arjs="sourceType: webcam; debugUIEnabled: false;">
-        <!-- Marcador HIRO -->
-        <a-marker type="pattern" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/images/hiro.patt">
+    <a-scene embedded arjs='sourceType: webcam; debugUIEnabled: false;'>
+        <!-- Usar URL absoluta del patrón para mayor fiabilidad -->
+        <a-marker type="pattern" url="https://raw.githubusercontent.com/AR-js-org/AR.js/master/data/data/hiro.patt">
             
-            <!-- Alfil (pieza 3D simple pero elegante) -->
-            <a-entity position="0 0 0" scale="0.5 0.5 0.5">
+            <!-- Grupo principal del Alfil -->
+            <a-entity position="0 0 0" scale="0.45 0.45 0.45">
                 <!-- Base -->
                 <a-cylinder radius="0.9" height="0.25" color="#222" metalness="0.7" position="0 0 0"></a-cylinder>
                 <!-- Cuerpo -->
@@ -52,34 +42,31 @@
                 <a-sphere radius="0.14" color="#ccaa66" position="0 2.6 0"></a-sphere>
             </a-entity>
 
-            <!-- Campo vectorial: flechas alrededor del alfil -->
-            <!-- Flechas en XZ -->
-            <a-entity position="-1.5 1.0 -1.5">
+            <!-- Flechas del Campo Vectorial -->
+            <a-entity position="-1.2 1.0 -1.2">
                 <a-arrow color="#00aaff" rotation="0 0 0"></a-arrow>
             </a-entity>
-            <a-entity position="-1.5 1.0 0">
+            <a-entity position="-1.2 1.0 0">
                 <a-arrow color="#44ffaa" rotation="0 90 0"></a-arrow>
             </a-entity>
-            <a-entity position="-1.5 1.0 1.5">
+            <a-entity position="-1.2 1.0 1.2">
                 <a-arrow color="#ffaa44" rotation="0 180 0"></a-arrow>
             </a-entity>
-            <a-entity position="0 1.0 -1.5">
+            <a-entity position="0 1.0 -1.2">
                 <a-arrow color="#ff44aa" rotation="0 45 0"></a-arrow>
             </a-entity>
-            <a-entity position="0 1.0 1.5">
+            <a-entity position="0 1.0 1.2">
                 <a-arrow color="#aa44ff" rotation="0 -45 0"></a-arrow>
             </a-entity>
-            <a-entity position="1.5 1.0 -1.5">
+            <a-entity position="1.2 1.0 -1.2">
                 <a-arrow color="#00ffaa" rotation="0 -90 0"></a-arrow>
             </a-entity>
-            <a-entity position="1.5 1.0 0">
+            <a-entity position="1.2 1.0 0">
                 <a-arrow color="#aa00ff" rotation="0 180 0"></a-arrow>
             </a-entity>
-            <a-entity position="1.5 1.0 1.5">
+            <a-entity position="1.2 1.0 1.2">
                 <a-arrow color="#ff6600" rotation="0 90 0"></a-arrow>
             </a-entity>
-
-            <!-- Flechas en altura (variación vertical) -->
             <a-entity position="-1 1.8 -1">
                 <a-arrow color="#88aaff" rotation="20 45 0"></a-arrow>
             </a-entity>
@@ -89,21 +76,17 @@
             <a-entity position="0 2.5 0">
                 <a-arrow color="#ff8888" rotation="45 0 0"></a-arrow>
             </a-entity>
-        </a-marker>
 
-        <!-- Cámara fija (AR.js la controla) -->
+        </a-marker>
         <a-entity camera></a-entity>
     </a-scene>
 
     <script>
-        // Registrar el componente de flecha (ArrowHelper no existe en A-Frame por defecto, lo creamos)
+        // Registrar el componente 'a-arrow' para crear las flechas
         AFRAME.registerComponent('a-arrow', {
-            schema: {
-                color: { type: 'color', default: '#ff0000' }
-            },
+            schema: { color: { type: 'color', default: '#ff0000' } },
             init: function() {
                 const color = this.data.color;
-                // Crear un grupo con un cilindro y un cono para la flecha
                 const group = document.createElement('a-entity');
                 const shaft = document.createElement('a-cylinder');
                 shaft.setAttribute('radius', '0.08');
@@ -118,8 +101,7 @@
                 group.appendChild(shaft);
                 group.appendChild(head);
                 this.el.appendChild(group);
-                // Rotar para que apunte hacia adelante (por defecto apunta hacia Y+, lo rotamos)
-                group.object3D.rotation.x = Math.PI / 2; // apunta hacia Z
+                group.object3D.rotation.x = Math.PI / 2;
             }
         });
     </script>
