@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Figura 3D - Cuerpo de revolución con campo vectorial</title>
+    <title>Figura 3D - Cuerpo de revolución (visible)</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         #info {
@@ -34,10 +34,10 @@
 </head>
 <body>
     <div id="info">
-        <strong>📐 Figura de revolución</strong> | Eje Z: 0 a 15 cm | Campo vectorial 3D
+        <strong>🔴 FIGURA PRINCIPAL</strong> | Cuerpo de revolución | Eje Z: 0 a 15 cm | Campo vectorial
     </div>
     <div id="controls-note">
-        🖱️ Ratón: rotar (izq), mover (der), zoom (rueda) | 📱 Táctil: gestos
+        🖱️ Ratón: rotar (izq), mover (der), zoom (rueda)
     </div>
 
     <script type="importmap">
@@ -54,54 +54,21 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-        // --- Construcción de la figura por revolución (LatheGeometry) ---
-        // Perfil: radio en función de la altura Z (de 0 a 15 cm)
-        // Ajustado según el gráfico: en Z=0 radio ~2 cm, luego decrece hasta Z=15 radio ~0
-        const points = [];
-        for (let z = 0; z <= 15.1; z += 0.15) {
-            let r;
-            if (z < 1.5) r = 2.0;
-            else if (z < 3.5) r = 2.0 - (z - 1.5) * 0.3;
-            else if (z < 6) r = 1.4 - (z - 3.5) * 0.2;
-            else if (z < 9) r = 0.9 - (z - 6) * 0.15;
-            else if (z < 12) r = 0.45 - (z - 9) * 0.1;
-            else r = 0.15 - (z - 12) * 0.05;
-            if (r < 0) r = 0;
-            points.push(new THREE.Vector2(r, z));
-        }
-        
-        const geometry = new THREE.LatheGeometry(points, 64);
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xcc8844,
-            metalness: 0.75,
-            roughness: 0.3,
-            emissive: 0x331100,
-            emissiveIntensity: 0.2
-        });
-        
-        const figure = new THREE.Mesh(geometry, material);
-        figure.castShadow = true;
-        figure.receiveShadow = false;
-        // Rotar para que el eje de revolución (Y) pase a ser Z
-        figure.rotation.x = -Math.PI / 2;
-        // Centrar la figura en el origen (su base está en Z=0, punta en Z=15)
-        figure.position.z = -7.5; // para que quede centrada entre -7.5 y 7.5
-        
-        // --- Escena ---
+        // --- Configuración de la escena ---
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050b1a);
-        scene.fog = new THREE.FogExp2(0x050b1a, 0.008);
-        
+        scene.fog = new THREE.FogExp2(0x050b1a, 0.01);
+
         const camera = new THREE.PerspectiveCamera(45, window.innerWidth / window.innerHeight, 0.1, 1000);
-        camera.position.set(6, 5, 8);
+        camera.position.set(8, 6, 12);
         camera.lookAt(0, 0, 0);
-        
+
         const renderer = new THREE.WebGLRenderer({ antialias: true });
         renderer.setSize(window.innerWidth, window.innerHeight);
         renderer.shadowMap.enabled = true;
         renderer.setPixelRatio(window.devicePixelRatio);
         document.body.appendChild(renderer.domElement);
-        
+
         const labelRenderer = new CSS2DRenderer();
         labelRenderer.setSize(window.innerWidth, window.innerHeight);
         labelRenderer.domElement.style.position = 'absolute';
@@ -109,8 +76,8 @@
         labelRenderer.domElement.style.left = '0px';
         labelRenderer.domElement.style.pointerEvents = 'none';
         document.body.appendChild(labelRenderer.domElement);
-        
-        // Controles
+
+        // --- Controles ---
         const controls = new OrbitControls(camera, renderer.domElement);
         controls.enableDamping = true;
         controls.dampingFactor = 0.05;
@@ -118,55 +85,149 @@
         controls.zoomSpeed = 1.2;
         controls.panSpeed = 0.8;
         controls.target.set(0, 0, 0);
-        
-        // Iluminación
+
+        // --- Iluminación potente y multicolor ---
         const ambientLight = new THREE.AmbientLight(0x404060);
         scene.add(ambientLight);
-        const mainLight = new THREE.DirectionalLight(0xffffff, 1);
+        
+        const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
         mainLight.position.set(3, 5, 2);
         mainLight.castShadow = true;
         scene.add(mainLight);
-        const backLight = new THREE.PointLight(0x4466cc, 0.5);
-        backLight.position.set(-2, 1, -3);
-        scene.add(backLight);
-        const fillLight = new THREE.PointLight(0xccaa66, 0.4);
-        fillLight.position.set(0, -1, 0);
+        
+        const fillLight = new THREE.PointLight(0xffaa66, 0.6);
+        fillLight.position.set(-2, 2, 3);
         scene.add(fillLight);
-        const rimLight = new THREE.PointLight(0xffaa66, 0.6);
-        rimLight.position.set(1, 2, 2);
+        
+        const backLight = new THREE.PointLight(0x44aaff, 0.5);
+        backLight.position.set(0, 2, -4);
+        scene.add(backLight);
+        
+        const rimLight = new THREE.PointLight(0xff66cc, 0.7);
+        rimLight.position.set(2, 1, 2);
         scene.add(rimLight);
         
-        // Suelo (grilla)
-        const gridHelper = new THREE.GridHelper(12, 20, 0x88aaff, 0x335588);
-        gridHelper.position.y = -3;
+        const bottomLight = new THREE.PointLight(0x66ffaa, 0.4);
+        bottomLight.position.set(0, -2, 0);
+        scene.add(bottomLight);
+        
+        // Suelo decorativo
+        const gridHelper = new THREE.GridHelper(15, 20, 0x88aaff, 0x335588);
+        gridHelper.position.y = -3.5;
         gridHelper.material.transparent = true;
-        gridHelper.material.opacity = 0.4;
+        gridHelper.material.opacity = 0.3;
         scene.add(gridHelper);
         
-        scene.add(figure);
+        // --- CREACIÓN DE LA FIGURA (Cuerpo de revolución) ---
+        // Vamos a construir un perfil de radios en función de la altura Z (de -7.5 a 7.5, para que el centro sea 0)
+        // La altura real será 15 cm, desde z = -7.5 (base) hasta z = +7.5 (punta)
+        // Definimos radios en diferentes alturas:
+        const alturas = [-7.5, -5, -2, 0, 2, 4, 6, 7.5];
+        const radiosEnAltura = [2.0, 2.2, 1.8, 1.4, 1.0, 0.6, 0.3, 0.0];
         
-        // --- Campo vectorial (flechas) ---
+        // Creamos un grupo para contener la figura
+        const figureGroup = new THREE.Group();
+        
+        // Método 1: Usar LatheGeometry (más elegante)
+        // Para Lathe, necesitamos puntos (radio, y) con y desde -7.5 hasta 7.5
+        const puntosPerfil = [];
+        for (let i = 0; i < alturas.length; i++) {
+            puntosPerfil.push(new THREE.Vector2(radiosEnAltura[i], alturas[i]));
+        }
+        // Añadimos más puntos intermedios para suavizar
+        for (let z = -7; z <= 7; z += 0.5) {
+            // Interpolación lineal simple
+            let r = 0;
+            for (let j = 0; j < alturas.length - 1; j++) {
+                if (z >= alturas[j] && z <= alturas[j+1]) {
+                    const t = (z - alturas[j]) / (alturas[j+1] - alturas[j]);
+                    r = radiosEnAltura[j] * (1 - t) + radiosEnAltura[j+1] * t;
+                    break;
+                }
+            }
+            if (z < alturas[0]) r = radiosEnAltura[0];
+            if (z > alturas[alturas.length-1]) r = radiosEnAltura[alturas.length-1];
+            puntosPerfil.push(new THREE.Vector2(r, z));
+        }
+        // Ordenar por Y
+        puntosPerfil.sort((a,b) => a.y - b.y);
+        
+        const latheGeo = new THREE.LatheGeometry(puntosPerfil, 48);
+        const materialFigura = new THREE.MeshStandardMaterial({
+            color: 0xdd8844,
+            metalness: 0.85,
+            roughness: 0.25,
+            emissive: 0x442200,
+            emissiveIntensity: 0.3
+        });
+        const figura = new THREE.Mesh(latheGeo, materialFigura);
+        figura.castShadow = true;
+        figura.receiveShadow = false;
+        // LatheGeometry genera alrededor del eje Y, así que ya está vertical (altura en Y)
+        // No rotamos nada, simplemente la añadimos al grupo
+        figureGroup.add(figura);
+        
+        // Añadir un borde de alambre brillante para que resalte
+        const wireMat = new THREE.MeshBasicMaterial({ color: 0xffaa66, wireframe: true, transparent: true, opacity: 0.35 });
+        const wireFigura = new THREE.Mesh(latheGeo, wireMat);
+        figureGroup.add(wireFigura);
+        
+        // Añadir partículas internas (como si tuviera volumen)
+        const particleCount = 2000;
+        const particleGeo = new THREE.BufferGeometry();
+        const particlePositions = new Float32Array(particleCount * 3);
+        for (let i = 0; i < particleCount; i++) {
+            // Generar puntos dentro del volumen de la figura (aproximado)
+            const y = (Math.random() - 0.5) * 14; // -7 a 7
+            // Encontrar radio en esa altura
+            let rMax = 0;
+            for (let j = 0; j < alturas.length - 1; j++) {
+                if (y >= alturas[j] && y <= alturas[j+1]) {
+                    const t = (y - alturas[j]) / (alturas[j+1] - alturas[j]);
+                    rMax = radiosEnAltura[j] * (1 - t) + radiosEnAltura[j+1] * t;
+                    break;
+                }
+            }
+            if (y < alturas[0]) rMax = radiosEnAltura[0];
+            if (y > alturas[alturas.length-1]) rMax = radiosEnAltura[alturas.length-1];
+            const angle = Math.random() * Math.PI * 2;
+            const r = Math.random() * rMax;
+            const x = Math.cos(angle) * r;
+            const z = Math.sin(angle) * r;
+            particlePositions[i*3] = x;
+            particlePositions[i*3+1] = y;
+            particlePositions[i*3+2] = z;
+        }
+        particleGeo.setAttribute('position', new THREE.BufferAttribute(particlePositions, 3));
+        const particleMat = new THREE.PointsMaterial({ color: 0xffaa88, size: 0.05, transparent: true, blending: THREE.AdditiveBlending });
+        const internalParticles = new THREE.Points(particleGeo, particleMat);
+        figureGroup.add(internalParticles);
+        
+        scene.add(figureGroup);
+        
+        // --- CAMPO VECTORIAL (flechas) alrededor de la figura ---
         function vectorField(x, y, z) {
-            let vx = -z * 0.5;
+            // Campo con torbellino y variación vertical
+            let vx = -z * 0.6;
             let vy = Math.sin(x * 1.2) * Math.cos(z * 1.2) * 0.5;
-            let vz = x * 0.5;
+            let vz = x * 0.6;
             let len = Math.hypot(vx, vy, vz);
             if (len < 0.05) return new THREE.Vector3(0, 0.2, 0);
-            const scale = 0.45;
+            const scale = 0.5;
             return new THREE.Vector3(vx / len * scale, vy / len * scale, vz / len * scale);
         }
         
         const step = 1.0;
         const arrowGroup = new THREE.Group();
         for (let x = -3.5; x <= 3.5; x += step) {
-            for (let y = -3.5; y <= 3.5; y += step) {
-                for (let z = -6; z <= 7; z += step) {
+            for (let y = -4; y <= 4; y += step) {
+                for (let z = -3.5; z <= 3.5; z += step) {
                     const dist = Math.hypot(x, y, z);
-                    if (dist > 2.0 && dist < 4.5) {
+                    if (dist > 2.2 && dist < 4.2) {
                         const dir = vectorField(x, y, z);
                         const hue = 0.55 + (dir.x * 0.2);
                         const color = new THREE.Color().setHSL(hue, 1.0, 0.6);
-                        const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(x, y, z), dir.length(), color, 0.28, 0.12);
+                        const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(x, y, z), dir.length(), color, 0.3, 0.13);
                         arrowGroup.add(arrow);
                     }
                 }
@@ -174,26 +235,26 @@
         }
         scene.add(arrowGroup);
         
-        // Partículas dinámicas alrededor
-        const flowCount = 1500;
+        // --- Partículas dinámicas que flotan siguiendo el campo ---
+        const flowCount = 1800;
         const flowGeo = new THREE.BufferGeometry();
         const flowPositions = new Float32Array(flowCount * 3);
         for (let i = 0; i < flowCount; i++) {
             const angle = Math.random() * Math.PI * 2;
-            const radius = 2.5 + Math.random() * 1.8;
-            const z = -5 + Math.random() * 12;
+            const radius = 2.5 + Math.random() * 1.5;
+            const y = -4 + Math.random() * 8;
             flowPositions[i*3] = Math.cos(angle) * radius;
-            flowPositions[i*3+1] = Math.sin(angle) * radius;
-            flowPositions[i*3+2] = z;
+            flowPositions[i*3+1] = y;
+            flowPositions[i*3+2] = Math.sin(angle) * radius;
         }
         flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPositions, 3));
-        const flowMat = new THREE.PointsMaterial({ color: 0x88ddff, size: 0.055, transparent: true, blending: THREE.AdditiveBlending });
+        const flowMat = new THREE.PointsMaterial({ color: 0x88ddff, size: 0.06, transparent: true, blending: THREE.AdditiveBlending });
         const flowParticles = new THREE.Points(flowGeo, flowMat);
         scene.add(flowParticles);
         
         function updateFlow(deltaTime) {
             const positions = flowGeo.attributes.position.array;
-            const speed = deltaTime * 2.2;
+            const speed = deltaTime * 2.5;
             for (let i = 0; i < flowCount; i++) {
                 let px = positions[i*3];
                 let py = positions[i*3+1];
@@ -202,12 +263,12 @@
                 px += dir.x * speed;
                 py += dir.y * speed;
                 pz += dir.z * speed;
-                if (Math.hypot(px, py) > 4.2 || pz < -7 || pz > 8) {
+                if (Math.hypot(px, pz) > 4.5 || py < -5 || py > 5) {
                     const angle = Math.random() * Math.PI * 2;
-                    const radius = 2.5 + Math.random() * 1.8;
+                    const radius = 2.5 + Math.random() * 1.5;
                     px = Math.cos(angle) * radius;
-                    py = Math.sin(angle) * radius;
-                    pz = -5 + Math.random() * 12;
+                    pz = Math.sin(angle) * radius;
+                    py = -4 + Math.random() * 8;
                 }
                 positions[i*3] = px;
                 positions[i*3+1] = py;
@@ -216,32 +277,41 @@
             flowGeo.attributes.position.needsUpdate = true;
         }
         
-        // Etiqueta CSS
+        // --- Etiqueta CSS ---
         const labelDiv = document.createElement('div');
-        labelDiv.textContent = `📐 Cuerpo de revolución | Altura 15 cm | Base Ø4 cm`;
+        labelDiv.textContent = `🔴 Cuerpo de revolución | Altura 15 cm | Base Ø4 cm | Punta afilada`;
         labelDiv.style.color = '#ffdd99';
-        labelDiv.style.backgroundColor = 'rgba(0,0,0,0.6)';
-        labelDiv.style.padding = '5px 12px';
-        labelDiv.style.borderRadius = '20px';
+        labelDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
+        labelDiv.style.padding = '6px 14px';
+        labelDiv.style.borderRadius = '25px';
         labelDiv.style.fontSize = '14px';
+        labelDiv.style.border = '1px solid #ff8844';
         const labelObj = new CSS2DObject(labelDiv);
-        labelObj.position.set(3, 2.5, 4);
+        labelObj.position.set(3, 3.5, 3);
         scene.add(labelObj);
         
-        // Animación
+        // --- Animación ---
         let lastTime = performance.now();
         function animate() {
             const now = performance.now();
             let delta = Math.min(0.033, (now - lastTime) / 1000);
             lastTime = now;
             
-            rimLight.intensity = 0.6 + Math.sin(Date.now() * 0.003) * 0.2;
+            // Efectos de luz
+            rimLight.intensity = 0.7 + Math.sin(Date.now() * 0.003) * 0.2;
+            bottomLight.intensity = 0.4 + Math.sin(Date.now() * 0.002) * 0.15;
+            
+            // Rotación suave de partículas internas
+            internalParticles.rotation.y += 0.003;
+            internalParticles.rotation.x += 0.002;
+            
             updateFlow(delta);
             controls.update();
             renderer.render(scene, camera);
             labelRenderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
+        
         animate();
         
         window.addEventListener('resize', () => {
@@ -251,7 +321,7 @@
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
         
-        console.log('Figura de revolución cargada correctamente');
+        console.log('Figura cargada correctamente. Altura total: 15 unidades, base ancha, punta fina.');
     </script>
 </body>
 </html>
