@@ -3,7 +3,7 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no">
-    <title>Figura de revolución (15 cm) con campo vectorial</title>
+    <title>Figura de revolución + Campo vectorial envolvente</title>
     <style>
         body { margin: 0; overflow: hidden; font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; }
         #info {
@@ -34,10 +34,10 @@
 </head>
 <body>
     <div id="info">
-        <strong>📐 FIGURA ORIGINAL (de la imagen)</strong> | Altura 15 cm | Base Ø4 cm | Punta 0 cm
+        <strong>📐 FIGURA CORRECTA</strong> | Sólido de revolución (Z: 0→15 cm) | Campo vectorial a su alrededor
     </div>
     <div id="controls-note">
-        🖱️ Ratón: rotar (izq), mover (der), zoom (rueda) | La figura está dentro del campo vectorial
+        🖱️ Ratón: rotar (izq), mover (der), zoom (rueda) | La figura está dentro del campo
     </div>
 
     <script type="importmap">
@@ -54,54 +54,47 @@
         import { OrbitControls } from 'three/addons/controls/OrbitControls.js';
         import { CSS2DRenderer, CSS2DObject } from 'three/addons/renderers/CSS2DRenderer.js';
 
-        // --- PERFIL DE LA FIGURA (según tu imagen: Z de 0 a 15 cm, radio variable) ---
-        // Definimos puntos (radio, altura) para la revolución alrededor del eje Z.
-        // Los valores están en centímetros, luego escalamos para que la altura total sea 15 unidades.
-        const perfil = [
-            { z: 0,  r: 2.0 },   // base
-            { z: 1,  r: 1.95 },
-            { z: 2,  r: 1.85 },
-            { z: 3,  r: 1.70 },
-            { z: 4,  r: 1.50 },
-            { z: 5,  r: 1.30 },
-            { z: 6,  r: 1.10 },
-            { z: 7,  r: 0.90 },
-            { z: 8,  r: 0.70 },
-            { z: 9,  r: 0.55 },
-            { z: 10, r: 0.40 },
-            { z: 11, r: 0.28 },
-            { z: 12, r: 0.18 },
-            { z: 13, r: 0.10 },
-            { z: 14, r: 0.04 },
-            { z: 15, r: 0.00 }    // punta
-        ];
+        // ================== 1. CREAR LA FIGURA (exactamente como en la imagen) ==================
+        // Perfil: radio en función de la altura Z (de 0 a 15 cm)
+        // Basado en la forma que mostraste: base ancha (2 cm) y se va afinando hasta punta 0
+        const profilePoints = [];
+        for (let z = 0; z <= 15; z += 0.2) {
+            let r;
+            if (z < 1) r = 2.0;
+            else if (z < 3) r = 2.0 - (z - 1) * 0.25;
+            else if (z < 6) r = 1.5 - (z - 3) * 0.2;
+            else if (z < 9) r = 0.9 - (z - 6) * 0.15;
+            else if (z < 12) r = 0.45 - (z - 9) * 0.1;
+            else r = 0.15 - (z - 12) * 0.05;
+            if (r < 0) r = 0;
+            profilePoints.push(new THREE.Vector2(r, z));
+        }
         
-        // Convertir a puntos Vector2 para LatheGeometry (Necesita (radio, y) con y desde -7.5 a 7.5 para centrar)
-        // Desplazamos Z para que el centro de la figura esté en Y=0 (Three.js usa Y como eje vertical)
-        const puntos = [];
-        perfil.forEach(p => {
-            // Convertir altura Z (0..15) a coordenada Y (-7.5 a 7.5)
-            const y = p.z - 7.5;
-            puntos.push(new THREE.Vector2(p.r, y));
+        // LatheGeometry alrededor del eje Y. Para que el eje de revolución sea Z, rotamos la geometría después.
+        const latheGeo = new THREE.LatheGeometry(profilePoints, 64);
+        const materialFig = new THREE.MeshStandardMaterial({
+            color: 0xdd8844,
+            metalness: 0.9,
+            roughness: 0.2,
+            emissive: 0x442200,
+            emissiveIntensity: 0.2,
+            flatShading: false
         });
-        
-        // Crear geometría de revolución (48 segmentos alrededor)
-        const geometry = new THREE.LatheGeometry(puntos, 64);
-        
-        // Material de la figura: metálico, color cobre, brillante
-        const material = new THREE.MeshStandardMaterial({
-            color: 0xcc8844,
-            metalness: 0.85,
-            roughness: 0.25,
-            emissive: 0x331100,
-            emissiveIntensity: 0.2
-        });
-        
-        const figura = new THREE.Mesh(geometry, material);
+        const figura = new THREE.Mesh(latheGeo, materialFig);
+        // La LatheGeometry está orientada con su eje de simetría en Y. Para que coincida con Z, la rotamos.
+        figura.rotation.x = Math.PI / 2;  // ahora el eje de revolución es Z
+        // Desplazamos para que la base (Z=0) quede en z = -7.5 y la punta (Z=15) en z = +7.5 (centro en 0)
+        figura.position.z = -7.5;
         figura.castShadow = true;
         figura.receiveShadow = false;
         
-        // --- Escena ---
+        // Añadir un borde de alambre para que se vea mejor
+        const wireMat = new THREE.MeshBasicMaterial({ color: 0xffaa66, wireframe: true, transparent: true, opacity: 0.3 });
+        const wireFig = new THREE.Mesh(latheGeo, wireMat);
+        wireFig.rotation.x = Math.PI / 2;
+        wireFig.position.z = -7.5;
+        
+        // ================== 2. ESCENA ==================
         const scene = new THREE.Scene();
         scene.background = new THREE.Color(0x050b1a);
         scene.fog = new THREE.FogExp2(0x050b1a, 0.008);
@@ -133,82 +126,86 @@
         controls.panSpeed = 0.8;
         controls.target.set(0, 0, 0);
         
-        // --- Iluminación (potente para que la figura resalte) ---
-        const ambientLight = new THREE.AmbientLight(0x404060);
-        scene.add(ambientLight);
-        
+        // Iluminación
+        const ambient = new THREE.AmbientLight(0x404060);
+        scene.add(ambient);
         const mainLight = new THREE.DirectionalLight(0xffffff, 1.2);
         mainLight.position.set(3, 5, 2);
         mainLight.castShadow = true;
         scene.add(mainLight);
-        
         const fillLight = new THREE.PointLight(0xffaa66, 0.6);
         fillLight.position.set(-2, 2, 3);
         scene.add(fillLight);
-        
         const backLight = new THREE.PointLight(0x44aaff, 0.5);
         backLight.position.set(0, 2, -4);
         scene.add(backLight);
-        
         const rimLight = new THREE.PointLight(0xff66cc, 0.7);
         rimLight.position.set(2, 1, 2);
         scene.add(rimLight);
-        
         const bottomLight = new THREE.PointLight(0x66ffaa, 0.4);
         bottomLight.position.set(0, -2, 0);
         scene.add(bottomLight);
         
-        // Suelo (grilla decorativa)
-        const gridHelper = new THREE.GridHelper(12, 20, 0x88aaff, 0x335588);
-        gridHelper.position.y = -4.5;
+        // Suelo decorativo
+        const gridHelper = new THREE.GridHelper(14, 20, 0x88aaff, 0x335588);
+        gridHelper.position.y = -4;
         gridHelper.material.transparent = true;
         gridHelper.material.opacity = 0.3;
         scene.add(gridHelper);
         
-        // Añadir la figura a la escena
+        // Añadir la figura y su borde
         scene.add(figura);
+        scene.add(wireFig);
         
-        // --- CAMPO VECTORIAL (flechas que rodean la figura) ---
-        // Función de campo vectorial (flujo rotacional alrededor del eje Y con variación sinusoidal)
+        // ================== 3. CAMPO VECTORIAL (flechas que rodean la figura) ==================
+        // Definimos un campo vectorial con rotación y algo de variación vertical
         function vectorField(x, y, z) {
-            let vx = -z * 0.6;
-            let vy = Math.sin(x * 1.2) * Math.cos(z * 1.2) * 0.5;
-            let vz = x * 0.6;
+            // Campo tipo torbellino alrededor del eje Y (pero adaptado a coordenadas)
+            let vx = -z * 0.5;
+            let vy = Math.sin(x * 1.0) * Math.cos(z * 1.0) * 0.4;
+            let vz = x * 0.5;
             let len = Math.hypot(vx, vy, vz);
             if (len < 0.05) return new THREE.Vector3(0, 0.2, 0);
             const scale = 0.5;
             return new THREE.Vector3(vx / len * scale, vy / len * scale, vz / len * scale);
         }
         
-        // Generar flechas en una caja que rodea la figura (pero sin penetrarla)
+        // Generamos flechas en un volumen que rodee completamente la figura.
+        // La figura ocupa: X e Y (radio variable hasta ~2), Z de -7.5 a 7.5.
+        // Pondremos flechas en una caja desde -4 a 4 en X,Y y desde -8 a 8 en Z, pero excluyendo el interior de la figura.
         const arrowGroup = new THREE.Group();
         const step = 1.0;
-        // Rango de X y Z: de -3.5 a 3.5, Y de -5 a 5 (la figura ocupa Y de -7.5 a 7.5, pero evitamos el interior)
-        for (let x = -3.8; x <= 3.8; x += step) {
-            for (let z = -3.8; z <= 3.8; z += step) {
-                for (let y = -5.5; y <= 5.5; y += step) {
-                    // Distancia al centro (aproximadamente el radio de la figura en ese Y)
-                    let radioFigura = 0;
-                    // Calcular radio de la figura en esa altura Y (interpolación lineal)
-                    for (let i = 0; i < perfil.length - 1; i++) {
-                        const z1 = perfil[i].z - 7.5;
-                        const z2 = perfil[i+1].z - 7.5;
-                        if (y >= z1 && y <= z2) {
-                            const t = (y - z1) / (z2 - z1);
-                            radioFigura = perfil[i].r * (1 - t) + perfil[i+1].r * t;
-                            break;
-                        }
-                    }
-                    if (y < perfil[0].z - 7.5) radioFigura = perfil[0].r;
-                    if (y > perfil[perfil.length-1].z - 7.5) radioFigura = perfil[perfil.length-1].r;
-                    
-                    const dist = Math.hypot(x, z);
-                    // Solo poner flechas si estamos fuera de la figura (dist > radioFigura + 0.2) y dentro de un radio máximo
-                    if (dist > radioFigura + 0.3 && dist < 4.2) {
+        // Función para obtener el radio de la figura en una coordenada Z (global)
+        function getRadiusAtZ(zWorld) {
+            // Convertir zWorld a Z local (0 a 15)
+            let zLocal = zWorld + 7.5;
+            if (zLocal < 0) return 2.0; // base extendida
+            if (zLocal > 15) return 0;
+            // Interpolación en el perfil
+            for (let i = 0; i < profilePoints.length - 1; i++) {
+                const z1 = profilePoints[i].y;
+                const z2 = profilePoints[i+1].y;
+                if (zLocal >= z1 && zLocal <= z2) {
+                    const t = (zLocal - z1) / (z2 - z1);
+                    const r1 = profilePoints[i].x;
+                    const r2 = profilePoints[i+1].x;
+                    return r1 * (1 - t) + r2 * t;
+                }
+            }
+            return 0;
+        }
+        
+        for (let x = -3.5; x <= 3.5; x += step) {
+            for (let y = -3.5; y <= 3.5; y += step) {
+                for (let z = -7; z <= 7; z += step) {
+                    const radioFig = getRadiusAtZ(z);
+                    const distHorizontal = Math.hypot(x, y);
+                    // Solo poner flechas si estamos fuera de la figura (distHorizontal > radioFig + 0.2) y dentro de un radio máximo 4
+                    if (distHorizontal > radioFig + 0.25 && distHorizontal < 4.0) {
                         const dir = vectorField(x, y, z);
                         const hue = 0.55 + (dir.x * 0.2);
                         const color = new THREE.Color().setHSL(hue, 1.0, 0.6);
-                        const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(x, y, z), dir.length(), color, 0.28, 0.12);
+                        const arrow = new THREE.ArrowHelper(dir, new THREE.Vector3(x, y, z), dir.length(), color, 0.3, 0.13);
                         arrowGroup.add(arrow);
                     }
                 }
@@ -216,21 +213,21 @@
         }
         scene.add(arrowGroup);
         
-        // --- Partículas dinámicas que siguen el campo vectorial (flotando alrededor) ---
+        // ================== 4. PARTÍCULAS DINÁMICAS (flujo alrededor) ==================
         const flowCount = 2000;
         const flowGeo = new THREE.BufferGeometry();
         const flowPositions = new Float32Array(flowCount * 3);
         for (let i = 0; i < flowCount; i++) {
-            // Posiciones iniciales en un volumen alrededor
+            // Posiciones iniciales en un cilindro hueco alrededor
             const angle = Math.random() * Math.PI * 2;
-            const radius = 2.5 + Math.random() * 1.8;
-            const y = -5 + Math.random() * 10;
+            const radius = 2.5 + Math.random() * 1.5;
+            const z = -6 + Math.random() * 12;
             flowPositions[i*3] = Math.cos(angle) * radius;
-            flowPositions[i*3+1] = y;
-            flowPositions[i*3+2] = Math.sin(angle) * radius;
+            flowPositions[i*3+1] = Math.sin(angle) * radius;
+            flowPositions[i*3+2] = z;
         }
         flowGeo.setAttribute('position', new THREE.BufferAttribute(flowPositions, 3));
-        const flowMat = new THREE.PointsMaterial({ color: 0x88ddff, size: 0.055, transparent: true, blending: THREE.AdditiveBlending });
+        const flowMat = new THREE.PointsMaterial({ color: 0x88ddff, size: 0.06, transparent: true, blending: THREE.AdditiveBlending });
         const flowParticles = new THREE.Points(flowGeo, flowMat);
         scene.add(flowParticles);
         
@@ -245,26 +242,15 @@
                 px += dir.x * speed;
                 py += dir.y * speed;
                 pz += dir.z * speed;
-                // Si se aleja demasiado o entra en la figura, reiniciar
-                let radioFigura = 0;
-                for (let j = 0; j < perfil.length - 1; j++) {
-                    const z1 = perfil[j].z - 7.5;
-                    const z2 = perfil[j+1].z - 7.5;
-                    if (py >= z1 && py <= z2) {
-                        const t = (py - z1) / (z2 - z1);
-                        radioFigura = perfil[j].r * (1 - t) + perfil[j+1].r * t;
-                        break;
-                    }
-                }
-                if (py < perfil[0].z - 7.5) radioFigura = perfil[0].r;
-                if (py > perfil[perfil.length-1].z - 7.5) radioFigura = perfil[perfil.length-1].r;
-                
-                if (Math.hypot(px, pz) < radioFigura + 0.2 || Math.hypot(px, py, pz) > 5.5) {
+                const radioFig = getRadiusAtZ(pz);
+                const distHor = Math.hypot(px, py);
+                // Si la partícula entra en la figura o se aleja demasiado, la reiniciamos
+                if (distHor < radioFig + 0.1 || Math.abs(pz) > 8.5 || distHor > 5.0) {
                     const angle = Math.random() * Math.PI * 2;
-                    const radius = 2.5 + Math.random() * 1.8;
+                    const radius = 2.5 + Math.random() * 1.5;
                     px = Math.cos(angle) * radius;
-                    pz = Math.sin(angle) * radius;
-                    py = -5 + Math.random() * 10;
+                    py = Math.sin(angle) * radius;
+                    pz = -6 + Math.random() * 12;
                 }
                 positions[i*3] = px;
                 positions[i*3+1] = py;
@@ -273,41 +259,30 @@
             flowGeo.attributes.position.needsUpdate = true;
         }
         
-        // --- Pequeñas partículas internas para dar volumen (opcional) ---
-        const internalParticleCount = 1500;
+        // ================== 5. PARTÍCULAS INTERNAS (opcional, para dar volumen) ==================
+        const internalCount = 1200;
         const internalGeo = new THREE.BufferGeometry();
-        const internalPositions = new Float32Array(internalParticleCount * 3);
-        for (let i = 0; i < internalParticleCount; i++) {
-            // Generar puntos dentro del volumen de la figura
-            const y = -7.5 + Math.random() * 15;
-            let radioMax = 0;
-            for (let j = 0; j < perfil.length - 1; j++) {
-                const z1 = perfil[j].z - 7.5;
-                const z2 = perfil[j+1].z - 7.5;
-                if (y >= z1 && y <= z2) {
-                    const t = (y - z1) / (z2 - z1);
-                    radioMax = perfil[j].r * (1 - t) + perfil[j+1].r * t;
-                    break;
-                }
-            }
-            if (y < perfil[0].z - 7.5) radioMax = perfil[0].r;
-            if (y > perfil[perfil.length-1].z - 7.5) radioMax = perfil[perfil.length-1].r;
-            const r = Math.random() * radioMax;
+        const internalPositions = new Float32Array(internalCount * 3);
+        for (let i = 0; i < internalCount; i++) {
+            const zLocal = Math.random() * 15;
+            const rMax = getRadiusAtZ(zLocal - 7.5);
+            const r = Math.random() * rMax;
             const angle = Math.random() * Math.PI * 2;
             const x = Math.cos(angle) * r;
-            const z = Math.sin(angle) * r;
+            const y = Math.sin(angle) * r;
+            const z = zLocal - 7.5;
             internalPositions[i*3] = x;
             internalPositions[i*3+1] = y;
             internalPositions[i*3+2] = z;
         }
         internalGeo.setAttribute('position', new THREE.BufferAttribute(internalPositions, 3));
-        const internalMat = new THREE.PointsMaterial({ color: 0xffaa88, size: 0.045, transparent: true, blending: THREE.AdditiveBlending });
+        const internalMat = new THREE.PointsMaterial({ color: 0xffaa88, size: 0.04, transparent: true, blending: THREE.AdditiveBlending });
         const internalParticles = new THREE.Points(internalGeo, internalMat);
         scene.add(internalParticles);
         
-        // --- Etiqueta CSS ---
+        // ================== 6. ETIQUETA ==================
         const labelDiv = document.createElement('div');
-        labelDiv.textContent = `📐 Figura original | Altura 15 cm | Base Ø4 cm | Campo vectorial a su alrededor`;
+        labelDiv.textContent = `📐 Sólido de revolución | Altura 15 cm | Base Ø4 cm | Campo vectorial envolvente`;
         labelDiv.style.color = '#ffdd99';
         labelDiv.style.backgroundColor = 'rgba(0,0,0,0.7)';
         labelDiv.style.padding = '6px 14px';
@@ -315,21 +290,18 @@
         labelDiv.style.fontSize = '14px';
         labelDiv.style.border = '1px solid #ff8844';
         const labelObj = new CSS2DObject(labelDiv);
-        labelObj.position.set(3, 4.5, 3.5);
+        labelObj.position.set(3, 4.2, 3.5);
         scene.add(labelObj);
         
-        // --- Animación ---
+        // ================== 7. ANIMACIÓN ==================
         let lastTime = performance.now();
         function animate() {
             const now = performance.now();
             let delta = Math.min(0.033, (now - lastTime) / 1000);
             lastTime = now;
             
-            // Luces pulsantes
             rimLight.intensity = 0.7 + Math.sin(Date.now() * 0.003) * 0.2;
             bottomLight.intensity = 0.4 + Math.sin(Date.now() * 0.002) * 0.15;
-            
-            // Rotación suave de partículas internas
             internalParticles.rotation.y += 0.002;
             internalParticles.rotation.x += 0.001;
             
@@ -339,7 +311,6 @@
             labelRenderer.render(scene, camera);
             requestAnimationFrame(animate);
         }
-        
         animate();
         
         window.addEventListener('resize', () => {
@@ -349,7 +320,7 @@
             labelRenderer.setSize(window.innerWidth, window.innerHeight);
         });
         
-        console.log('Figura cargada con el perfil exacto de la imagen. Altura 15 cm, base 2 cm de radio.');
+        console.log('Figura correcta cargada. Altura 15 unidades, radio máximo 2, campo vectorial rodeándola.');
     </script>
 </body>
 </html>
